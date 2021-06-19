@@ -10,25 +10,25 @@ const log = console.log
 
 storedRounds = {} // round : roundvalues
 lastMessage = ""
-TEST_CHANNEL = client.channels.fetch(secrets.testChannelId)
-DEPL_CHANNEL = client.channels.fetch(secrets.deploymentChannelId)
 
 
 const mkreq = async () => {
     for(x=0; x<= 1000000; x++){
         await timer(60000).then(
-            axios.get('http://10.1.0.2/api/client/teams/17/',{ headers: {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'}})
+            axios.get('http://10.1.0.2/api/client/teams/31/',{ headers: {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'}})
                 .then((res) => {
                     //console.log(res.data)
                     for (round of res.data){
-                        if (!(round['round'] in storedRounds) && round["task_id"] == "1"){
+                        if (!(round['round'] in storedRounds)){
                             //checks if the round is not stored already
-                            storedRounds[round['round']] = {"1": round}
+                            storedRounds[round['round']] = {}
+                            storedRounds[round['round']][round["task_id"]] = round
                         }
+                        else{
                         // add the other task id to the stored[round['round']]
                         storedRounds[round['round']][round['task_id']] = round
-                        
-                        //console.log(storedRounds)
+                        }
+                        console.log(storedRounds)
                     }
                     console.log(storedRounds)
                 })
@@ -46,6 +46,8 @@ mkreq()
 
 client.once('ready', () => {
     var atRound
+    TEST_CHANNEL = client.channels.fetch(secrets.testChannelId)
+    DEPL_CHANNEL = client.channels.fetch(secrets.deploymentChannelId)
 
     parserCC = (json) => {
         statCodes = {
@@ -58,15 +60,25 @@ client.once('ready', () => {
             "1": "biomarket",
             "2": "ilbonus"
         }
-        messageTemplate = `ueue il servizio numero ${json.task_id} e chiamato ${tasksNames[json.task_id]} é ${statCodes[json.status]}\n`
-        
-        return messageTemplate
+        log(json.round, json.task_id)
+        //messageTemplate = `ueue il servizio numero ${json.task_id} e chiamato ${tasksNames[json.task_id]} é ${statCodes[json.status]} nel round ${json.round}\n`
+        if(json.status != "101"){
+            messageTemplate = `ATTENZIONE: il servizio ${tasksNames[json.task_id]} é ${statCodes[json.status]} nel round ${json.round}\n`
+            return messageTemplate
+        }
+        else{
+            return "blockme"
+        }
     }
     
     //just a test
     //messageToSend = () => Math.random() - 0.5 <= 0 ? "AAAA" : "BBBB"
-  
+    
     messageToSend = () => {
+
+        //log(String(Number(atRound)+1))
+        //log(storedRounds, lastMessage)
+
         if (lastMessage == ''){
             firstRound = storedRounds[Object.keys(storedRounds)[0]]
             atRound = firstRound["1"]['round'] 
@@ -76,6 +88,7 @@ client.once('ready', () => {
             for (service in firstRound){
                 mexToSend += parserCC(firstRound[service])
             }
+            log(mexToSend)
             return mexToSend
         }
 
@@ -87,7 +100,8 @@ client.once('ready', () => {
 
             // for each service
             for (service in currentRound){
-                mexToSend += parserCC(firstRound[service])
+                log(service)
+                mexToSend += parserCC(currentRound[service])
             }
             return mexToSend
         }
@@ -97,12 +111,20 @@ client.once('ready', () => {
     }
     
     sendMex = (mTS = messageToSend()) => {
-    TEST_CHANNEL.then(
+    DEPL_CHANNEL.then(
         (channel) => {
-            log(mTS, lastMessage, typeof lastMessage)
+            //log(mTS, lastMessage, typeof lastMessage)
             if((mTS != lastMessage || !lastMessage) && mTS != "blockme"){
-                channel.send(mTS)
-                lastMessage = mTS
+                while(mTS.includes("blockme")){
+                    mTS = mTS.replace("blockme","")
+                }
+                lastMessage = 'placeholder'
+
+                if(mTS != ""){
+                    channel.send(mTS)
+                    lastMessage = mTS
+                }
+
             }
     })
     }
