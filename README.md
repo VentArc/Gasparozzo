@@ -1,2 +1,1 @@
-# CCSDBot
-CCServiceDiscordBot
+CCSDB codename Gasparbotto 
