@@ -28,7 +28,7 @@ const mkreq = async () => {
                         // add the other task id to the stored[round['round']]
                         storedRounds[round['round']][round['task_id']] = round
                         }
-                        console.log(storedRounds)
+                        // console.log(storedRounds)
                     }
                     console.log(storedRounds)
                 })
@@ -57,13 +57,15 @@ client.once('ready', () => {
             "104": "down"
         }
         tasksNames = {
-            "1": "biomarket",
-            "2": "ilbonus"
+            "1": "ctfe",
+            "2": "NotABook",
+            "3": "SaaS",
+            "4": "WeirdCpu",
         }
         log(json.round, json.task_id)
         //messageTemplate = `ueue il servizio numero ${json.task_id} e chiamato ${tasksNames[json.task_id]} é ${statCodes[json.status]} nel round ${json.round}\n`
         if(json.status != "101"){
-            messageTemplate = `ATTENZIONE: il servizio ${tasksNames[json.task_id]} é ${statCodes[json.status]} nel round ${json.round}\n`
+            messageTemplate = `ATTENZIONE: il servizio ${tasksNames[json.task_id] ? tasksNames[json.task_id] : "numero " + tasksNames } é ${statCodes[json.status]} nel round ${json.round}\n`
             return messageTemplate
         }
         else{
@@ -88,7 +90,7 @@ client.once('ready', () => {
             for (service in firstRound){
                 mexToSend += parserCC(firstRound[service])
             }
-            log(mexToSend)
+            // log(mexToSend)
             return mexToSend
         }
 
@@ -100,7 +102,7 @@ client.once('ready', () => {
 
             // for each service
             for (service in currentRound){
-                log(service)
+                // log(service)
                 mexToSend += parserCC(currentRound[service])
             }
             return mexToSend
